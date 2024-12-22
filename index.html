@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genshin Wish Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background: #4caf50;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Genshin Wish Simulator</h1>
+        <label for="copies">Ile kopii postaci chcesz zdobyć? (C6 = 7, Cn = n+1):</label>
+        <input type="number" id="copies" placeholder="Np. 7">
+
+        <label for="wishes">Ile masz wishy?</label>
+        <input type="number" id="wishes" placeholder="Np. 90">
+
+        <label for="simulations">Ile symulacji chcesz wykonać? (max 10,000):</label>
+        <input type="number" id="simulations" placeholder="Np. 1000">
+
+        <label for="calcType">Wybierz typ kalkulatora:</label>
+        <select id="calcType">
+            <option value="1">Prosty</option>
+            <option value="2">Zaawansowany</option>
+        </select>
+
+        <button onclick="runSimulation()">Rozpocznij Symulację</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function runSimulation() {
+            const copies = parseInt(document.getElementById('copies').value);
+            const wishes = parseInt(document.getElementById('wishes').value);
+            const simulations = parseInt(document.getElementById('simulations').value);
+            const calcType = parseInt(document.getElementById('calcType').value);
+
+            if (!copies || !wishes || !simulations || !calcType) {
+                document.getElementById('result').innerText = "Wprowadź wszystkie dane!";
+                return;
+            }
+
+            let success = 0;
+            let totalWishesUsed = 0;
+
+            function simulateSimple(wishes, count) {
+                let usedWishes = 0;
+                let copiesObtained = 0;
+
+                while (copiesObtained < count) {
+                    if (usedWishes >= wishes) return false;
+
+                    let pity = Math.random() * 100;
+                    if (pity < 6) {
+                        copiesObtained++;
+                        usedWishes += Math.floor(Math.random() * 74) + 1;
+                    } else {
+                        copiesObtained++;
+                        usedWishes += Math.floor(Math.random() * 76) + 75;
+                    }
+                }
+                return usedWishes;
+            }
+
+            function simulateAdvanced(wishes, count) {
+                let usedWishes = 0;
+                let copiesObtained = 0;
+                let guarantee = false;
+
+                while (copiesObtained < count) {
+                    if (usedWishes >= wishes) return false;
+
+                    let rollsDid = 0;
+
+                    while (rollsDid < 91) {
+                        let chance = rollsDid < 75 ? 0.006 : 0.006 + (rollsDid - 74) * (0.2 / 16);
+                        if (Math.random() < chance) {
+                            if (Math.random() < 0.5 || guarantee) {
+                                copiesObtained++;
+                                usedWishes += rollsDid + 1;
+                                guarantee = false;
+                                break;
+                            } else {
+                                usedWishes += rollsDid + 1;
+                                guarantee = true;
+                                break;
+                            }
+                        }
+                        rollsDid++;
+                    }
+                }
+                return usedWishes;
+            }
+
+            for (let i = 0; i < simulations; i++) {
+                const result = calcType === 1 
+                    ? simulateSimple(wishes, copies) 
+                    : simulateAdvanced(wishes, copies);
+
+                if (result) {
+                    success++;
+                    totalWishesUsed += result;
+                }
+            }
+
+            const successRate = ((success / simulations) * 100).toFixed(2);
+            const avgWishes = success > 0 ? (totalWishesUsed / success).toFixed(0) : 0;
+
+            document.getElementById('result').innerText = 
+                `Przeprowadzono ${simulations} symulacji!\n` +
+                `Uzyskano w: ${successRate}% sytuacji\n` +
+                `Średnia wishy wynosiła: ${avgWishes}`;
+        }
+    </script>
+</body>
+</html>
